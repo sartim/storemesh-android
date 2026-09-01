@@ -31,7 +31,8 @@ an approved tunnel.
 Open the repository root, allow Gradle sync, and select the `app` run
 configuration. In Android Studio, set **Gradle JDK** to the bundled JDK 17 and
 set **Gradle distribution** to **Wrapper**. The committed wrapper uses Gradle
-8.11.1, which is required by the Android Gradle Plugin used here. Select the
+8.9, which is required by AGP 8.7.3 and is compatible with Android Studio
+versions that support AGP 8.7. Select the
 existing `Medium_Phone` API 35 emulator and press Run.
 
 If Android Studio shows **Module not specified**, delete the empty run
