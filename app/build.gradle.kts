@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "com.storemesh.android"
     compileSdk = 35
+    buildFeatures { buildConfig = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -17,6 +18,8 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+        // Android emulators reach host localhost through 10.0.2.2.
+        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080\"")
     }
 }
 
@@ -31,5 +34,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.compose.material.icons)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

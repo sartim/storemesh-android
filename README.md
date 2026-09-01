@@ -26,6 +26,12 @@ For an Android emulator, the local BFF is typically
 `http://10.0.2.2:8080/api/v1`. A physical device needs the host LAN address or
 an approved tunnel.
 
+The debug build uses `http://10.0.2.2:8080` by default. Start the local BFF
+and port-forward it to `localhost:8080` before signing in. The app calls
+`POST /api/v1/auth/login` and loads active products from
+`GET /api/v1/products`. For a physical device, replace `API_BASE_URL` in
+`app/build.gradle.kts` with the host machine's LAN address.
+
 ## Android Studio run configuration
 
 Open the repository root, allow Gradle sync, and select the `app` run
