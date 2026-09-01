@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun CartScreen(lines: List<CartLine>, products: List<Product>, onChange: (String, Int) -> Unit, onClear: () -> Unit, modifier: Modifier = Modifier) {
+fun CartScreen(lines: List<CartLine>, products: List<Product>, onChange: (String, Int) -> Unit, onClear: () -> Unit, onCheckout: () -> Unit, isCheckingOut: Boolean = false, modifier: Modifier = Modifier) {
     val names = products.associateBy { it.id }
     LazyColumn(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
@@ -42,7 +42,8 @@ fun CartScreen(lines: List<CartLine>, products: List<Product>, onChange: (String
             val total = lines.sumOf { line -> names[line.productId]?.priceMinor?.times(line.quantity.toLong()) ?: 0L }
             Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("Subtotal"); Text("USD ${"%.2f".format(total / 100.0)}", style = MaterialTheme.typography.titleMedium) }
-                Text("Checkout is completed from the order flow.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+                Text("Your saved cart is ready to submit as one order.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+                Button(onClick = onCheckout, enabled = !isCheckingOut, modifier = Modifier.fillMaxWidth().padding(top = 14.dp)) { Text(if (isCheckingOut) "Placing order…" else "Checkout") }
             } }
         }
     }
