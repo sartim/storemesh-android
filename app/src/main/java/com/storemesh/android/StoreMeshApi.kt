@@ -36,6 +36,29 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
         }
     }
 
+    fun getCart(accessToken: String): List<CartLine> {
+        val response = request("/api/v1/cart", "GET", token = accessToken)
+        val array = response.optJSONArray("lines") ?: return emptyList()
+        return List(array.length()) { index ->
+            val item = array.getJSONObject(index)
+            CartLine(item.optString("productId", item.optString("product_id")), item.optInt("quantity"))
+        }
+    }
+
+    fun saveCart(accessToken: String, lines: List<CartLine>): List<CartLine> {
+        val payload = JSONObject().put("lines", org.json.JSONArray().apply {
+            lines.forEach { put(JSONObject().put("productId", it.productId).put("quantity", it.quantity)) }
+        })
+        val response = request("/api/v1/cart", "PUT", payload, accessToken)
+        val array = response.optJSONArray("lines") ?: return emptyList()
+        return List(array.length()) { index ->
+            val item = array.getJSONObject(index)
+            CartLine(item.optString("productId", item.optString("product_id")), item.optInt("quantity"))
+        }
+    }
+
+    fun clearCart(accessToken: String) { request("/api/v1/cart", "DELETE", token = accessToken) }
+
     fun createOrder(accessToken: String, customerId: String, lines: List<CartLine>): Order {
         require(lines.isNotEmpty()) { "cart cannot be empty" }
         val payload = JSONObject().put("customerId", customerId).put("lines", org.json.JSONArray().apply {

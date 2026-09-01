@@ -50,6 +50,10 @@ Verify `https://YOUR-NGROK-DOMAIN.ngrok-free.app/healthz` before configuring
 the app. Keep the tunnel URL in local build configuration and never expose
 gRPC, databases, Redis, or observability dashboards.
 
+The native API client supports `GET /cart`, `PUT /cart`, and `DELETE /cart`.
+These endpoints use the authenticated customer's persisted cart; the
+customer-facing cart UI and checkout integration are the next native slice.
+
 ## Releases
 
 Run the **Android release** workflow manually. `semantic-release` determines
