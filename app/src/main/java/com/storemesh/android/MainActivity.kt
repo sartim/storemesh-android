@@ -75,14 +75,22 @@ private fun StoreMeshApp(context: Context) {
     var token by remember { mutableStateOf(SessionStore(context).accessToken) }
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(900)
+        val session = SessionStore(context)
+        if (token.isNullOrBlank() && !session.refreshToken.isNullOrBlank()) {
+            runCatching { StoreMeshApi().refresh(session.refreshToken.orEmpty()) }
+                .onSuccess {
+                    session.save(it)
+                    token = it.accessToken
+                }
+        }
         stage = if (token.isNullOrBlank()) AppStage.Login else AppStage.Shop
     }
     MaterialTheme { Surface(Modifier.fillMaxSize()) {
         when (stage) {
             AppStage.Splash -> SplashScreen()
-            AppStage.Login -> LoginScreen { accessToken ->
-                SessionStore(context).accessToken = accessToken
-                token = accessToken
+            AppStage.Login -> LoginScreen { result ->
+                SessionStore(context).save(result)
+                token = result.accessToken
                 stage = AppStage.Shop
             }
             AppStage.Shop -> ShopScreen(token.orEmpty()) {
@@ -109,7 +117,7 @@ private fun SplashScreen() {
 }
 
 @Composable
-private fun LoginScreen(onLoggedIn: (String) -> Unit) {
+private fun LoginScreen(onLoggedIn: (LoginResult) -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
@@ -127,7 +135,7 @@ private fun LoginScreen(onLoggedIn: (String) -> Unit) {
             loading = true
             scope.launch {
                 runCatching { StoreMeshApi().login(email.trim(), password) }
-                    .onSuccess { onLoggedIn(it.accessToken) }
+                    .onSuccess(onLoggedIn)
                     .onFailure { error = it.message ?: "Unable to sign in"; loading = false }
             }
         }, enabled = !loading && email.isNotBlank() && password.isNotBlank(), modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(14.dp)) {
@@ -210,6 +218,12 @@ private class SessionStore(context: Context) {
     private val prefs = context.getSharedPreferences("storemesh_session", Context.MODE_PRIVATE)
     var accessToken: String?
         get() = prefs.getString("access_token", null)
-        set(value) { prefs.edit().putString("access_token", value).apply() }
+        private set(value) { prefs.edit().putString("access_token", value).apply() }
+    var refreshToken: String?
+        get() = prefs.getString("refresh_token", null)
+        private set(value) { prefs.edit().putString("refresh_token", value).apply() }
+    fun save(session: LoginResult) {
+        prefs.edit().putString("access_token", session.accessToken).putString("refresh_token", session.refreshToken).apply()
+    }
     fun clear() { prefs.edit().clear().apply() }
 }

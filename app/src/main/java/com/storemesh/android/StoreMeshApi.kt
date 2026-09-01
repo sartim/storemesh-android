@@ -13,6 +13,11 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
         return LoginResult(response.getString("accessToken"), response.getString("refreshToken"))
     }
 
+    fun refresh(refreshToken: String): LoginResult {
+        val response = request("/api/v1/auth/refresh", "POST", JSONObject().put("refreshToken", refreshToken))
+        return LoginResult(response.getString("accessToken"), response.getString("refreshToken"))
+    }
+
     fun products(accessToken: String): List<Product> {
         val response = request("/api/v1/products?page_size=100&status=PRODUCT_STATUS_ACTIVE", "GET", token = accessToken)
         val array = response.optJSONArray("products") ?: return emptyList()
