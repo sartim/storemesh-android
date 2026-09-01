@@ -23,10 +23,21 @@ app/src/main/java/com/storemesh/android/
 ```
 
 The debug build uses `http://10.0.2.2:8080` by default. Start the local BFF
-and port-forward it to `localhost:8080` before signing in. The app calls
-`POST /api/v1/auth/login` and loads active products from
-`GET /api/v1/products`. For a physical device, change `API_BASE_URL` in
-`app/build.gradle.kts` to the host machine's LAN address.
+and port-forward it to `localhost:8080` before signing in. The app calls the
+BFF's REST endpoints and loads active products from `GET /api/v1/products`.
+For a physical device, change `API_BASE_URL` in `app/build.gradle.kts` to the
+host machine's LAN address.
+
+The `Continue with StoreMesh` action uses native AppAuth with Authorization
+Code + PKCE and the public `storemesh-android` Keycloak client. The callback
+is `com.storemesh.android://oauth/callback`; access and refresh tokens are
+stored through the encrypted `SessionStore` backed by Android Keystore.
+
+The debug Keycloak issuer is `http://10.0.2.2:8081/realms/storemesh`, so the
+local forwarding script must expose Keycloak on port `8081` before testing
+native sign-in. A physical device should use an HTTPS ngrok BFF origin and a
+device-reachable Keycloak issuer; override the debug values locally rather
+than committing tunnel URLs.
 
 For a physical-device demo, expose only the BFF through an authenticated
 ngrok tunnel:
