@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="StoreMesh" type="AndroidRunConfigurationType" factoryName="Android App">
+    <module name="app" />
+    <option name="DEPLOY" value="true" />
+    <method v="2" />
+  </configuration>
+</component>

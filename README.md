@@ -33,3 +33,9 @@ configuration. In Android Studio, set **Gradle JDK** to the bundled JDK 17 and
 set **Gradle distribution** to **Wrapper**. The committed wrapper uses Gradle
 8.11.1, which is required by the Android Gradle Plugin used here. Select the
 existing `Medium_Phone` API 35 emulator and press Run.
+
+If Android Studio shows **Module not specified**, delete the empty run
+configuration and choose **Run > Edit Configurations > + > Android App**. Set
+the module to `StoreMesh.app` (shown as `app` in some Android Studio versions),
+select `Medium_Phone_API_35`, and apply. The repository also includes a shared
+`StoreMesh` configuration under `.run/StoreMesh.xml` after Gradle sync.

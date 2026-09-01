@@ -6,6 +6,10 @@ build/
 
 # Android Studio / IntelliJ
 .idea/
+.idea/**/workspace.xml
+.idea/**/usage.statistics.xml
+.run/*
+!.run/StoreMesh.xml
 *.iml
 *.ipr
 *.iws
