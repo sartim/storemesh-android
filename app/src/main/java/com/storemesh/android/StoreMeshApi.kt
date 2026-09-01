@@ -36,13 +36,30 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
         }
     }
 
-    private fun request(path: String, method: String, body: JSONObject? = null, token: String? = null): JSONObject {
+    fun createOrder(accessToken: String, customerId: String, lines: List<CartLine>): Order {
+        require(lines.isNotEmpty()) { "cart cannot be empty" }
+        val payload = JSONObject().put("customerId", customerId).put("lines", org.json.JSONArray().apply {
+            lines.forEach { put(JSONObject().put("productId", it.productId).put("quantity", it.quantity)) }
+        })
+        val response = request(
+            "/api/v1/orders",
+            "POST",
+            payload,
+            accessToken,
+            idempotencyKey = java.util.UUID.randomUUID().toString()
+        )
+        val item = response.getJSONObject("order")
+        return Order(item.optString("orderId"), item.optString("status"), item.optLong("totalMinor"), item.optString("currency", "USD"), item.optString("createdAt"))
+    }
+
+    private fun request(path: String, method: String, body: JSONObject? = null, token: String? = null, idempotencyKey: String? = null): JSONObject {
         val connection = (URL(baseUrl.trimEnd('/') + path).openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 8_000
             readTimeout = 8_000
             setRequestProperty("Accept", "application/json")
             if (token != null) setRequestProperty("Authorization", "Bearer $token")
+            if (idempotencyKey != null) setRequestProperty("Idempotency-Key", idempotencyKey)
             if (body != null) {
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json")

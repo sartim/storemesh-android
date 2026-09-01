@@ -13,6 +13,7 @@ import javax.crypto.spec.GCMParameterSpec
 data class Product(val id: String, val name: String, val description: String, val priceMinor: Long, val currency: String) { fun formattedPrice() = "${currency.ifBlank { "USD" }} ${"%.2f".format(priceMinor / 100.0)}" }
 data class LoginResult(val accessToken: String, val refreshToken: String)
 data class Order(val orderId: String, val status: String, val totalMinor: Long, val currency: String, val createdAt: String)
+data class CartLine(val productId: String, val quantity: Int)
 class SessionStore(context: Context) {
     private val prefs = context.getSharedPreferences("storemesh_session", Context.MODE_PRIVATE)
 
