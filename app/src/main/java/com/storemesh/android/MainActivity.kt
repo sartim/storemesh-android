@@ -29,6 +29,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Dialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -155,6 +157,7 @@ private fun ShopScreen(accessToken: String, onLogout: () -> Unit) {
     var query by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("All") }
     var showOrders by remember { mutableStateOf(false) }
+    var selectedProduct by remember { mutableStateOf<Product?>(null) }
     val categories = listOf("All", "Featured", "Deals")
     LaunchedEffect(Unit) {
         runCatching { StoreMeshApi().products(accessToken) }
@@ -194,10 +197,11 @@ private fun ShopScreen(accessToken: String, onLogout: () -> Unit) {
                     Row(Modifier.padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) { categories.forEach { category -> FilterChip(selectedCategory == category, { selectedCategory = category }, label = { Text(category) }) } }
                 }
                 if (filtered.isEmpty()) Text("No products found. Check that the BFF is running on localhost:8080.", Modifier.padding(24.dp))
-                else LazyVerticalGrid(GridCells.Adaptive(160.dp), Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { items(filtered) { ProductCard(it) } }
+                else LazyVerticalGrid(GridCells.Adaptive(160.dp), Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { items(filtered) { ProductCard(it) { selectedProduct = it } } }
             }
         }
     }
+    selectedProduct?.let { product -> ProductDetailsDialog(product) { selectedProduct = null } }
 }
 
 @Composable
@@ -226,8 +230,8 @@ private fun OrdersScreen(accessToken: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ProductCard(product: Product) {
-    Card {
+private fun ProductCard(product: Product, onClick: () -> Unit = {}) {
+    Card(onClick = onClick) {
         Column(Modifier.padding(14.dp)) {
             Box(Modifier.fillMaxWidth().height(92.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFFEAF1F8)), contentAlignment = Alignment.Center) { Text(product.name.take(1).uppercase(), style = MaterialTheme.typography.headlineLarge, color = Color(0xFF245B85), fontWeight = FontWeight.Bold) }
             Spacer(Modifier.height(10.dp))
@@ -235,6 +239,21 @@ private fun ProductCard(product: Product) {
             Text(product.description, color = Color.Gray, maxLines = 2, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(8.dp))
             Text(product.formattedPrice(), color = Color(0xFF145A32), fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun ProductDetailsDialog(product: Product, onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card {
+            Column(Modifier.padding(24.dp)) {
+                Text(product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(product.formattedPrice(), color = Color(0xFF145A32), fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+                Text(product.description, modifier = Modifier.padding(top = 14.dp))
+                Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) { Text("Add to cart") }
+                TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) { Text("Close") }
+            }
         }
     }
 }
