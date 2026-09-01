@@ -51,8 +51,8 @@ builds the release APK as an artifact.
 Open the repository root, allow Gradle sync, and select the `app` run
 configuration. In Android Studio, set **Gradle JDK** to the bundled JDK 17 and
 set **Gradle distribution** to **Wrapper**. The committed wrapper uses Gradle
-8.9, which is required by AGP 8.7.3 and is compatible with Android Studio
-versions that support AGP 8.7. Select the
+9.5.0, which is required by AGP 9.3.0. AGP 9 provides Kotlin support directly;
+the project retains the Compose compiler plugin. Select the
 existing `Medium_Phone` API 35 emulator and press Run.
 
 If Android Studio shows **Module not specified**, delete the empty run
