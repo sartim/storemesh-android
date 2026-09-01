@@ -29,6 +29,7 @@ captures/
 *.class
 *.log
 .kotlin/
+.release/node_modules/
 
 # OS / tooling
 .DS_Store

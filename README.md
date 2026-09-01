@@ -34,10 +34,10 @@ and port-forward it to `localhost:8080` before signing in. The app calls
 
 ## Releases
 
-Run the **Android release** workflow manually with a `MAJOR.MINOR.PATCH`
-version. It stamps `versionName` and a monotonic Android `versionCode`, builds
-the release APK, uploads it as an artifact, and creates the matching `vX.Y.Z`
-tag.
+Run the **Android release** workflow manually. `semantic-release` determines
+the next `MAJOR.MINOR.PATCH` from Conventional Commits, stamps `versionName`
+and a monotonic Android `versionCode`, creates the GitHub release/tag, and
+builds the release APK as an artifact.
 
 The debug build uses `http://10.0.2.2:8080` by default. Start the local BFF
 and port-forward it to `localhost:8080` before signing in. The app calls
