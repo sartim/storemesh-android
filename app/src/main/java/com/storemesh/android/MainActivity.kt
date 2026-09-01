@@ -154,6 +154,7 @@ private fun ShopScreen(accessToken: String, onLogout: () -> Unit) {
     var products by remember { mutableStateOf<List<Product>>(emptyList()) }
     var query by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("All") }
+    var showOrders by remember { mutableStateOf(false) }
     val categories = listOf("All", "Featured", "Deals")
     LaunchedEffect(Unit) {
         runCatching { StoreMeshApi().products(accessToken) }
@@ -171,7 +172,10 @@ private fun ShopScreen(accessToken: String, onLogout: () -> Unit) {
                 Text("Customer shop", color = Color.Gray)
                 Spacer(Modifier.height(24.dp))
                 listOf("Shop", "My orders", "Saved items").forEach { item ->
-                    Text(item, Modifier.fillMaxWidth().clickable { scope.launch { drawerState.close() } }.padding(vertical = 16.dp), fontWeight = if (item == "Shop") FontWeight.Bold else FontWeight.Normal)
+                    Text(item, Modifier.fillMaxWidth().clickable {
+                        showOrders = item == "My orders"
+                        scope.launch { drawerState.close() }
+                    }.padding(vertical = 16.dp), fontWeight = if ((item == "Shop") == !showOrders) FontWeight.Bold else FontWeight.Normal)
                 }
                 HorizontalDivider(Modifier.padding(vertical = 12.dp))
                 Text("Sign out", Modifier.fillMaxWidth().clickable(onClick = onLogout).padding(vertical = 16.dp), color = MaterialTheme.colorScheme.error)
@@ -179,7 +183,9 @@ private fun ShopScreen(accessToken: String, onLogout: () -> Unit) {
         }
     }) {
         Scaffold(topBar = { TopAppBar(title = { Text("Shop") }, navigationIcon = { IconButton({ scope.launch { drawerState.open() } }) { Icon(Icons.Default.Menu, "Menu") } }, actions = { IconButton({}) { Icon(Icons.Default.ShoppingBag, "Cart") } }) }, snackbarHost = { SnackbarHost(snackbar) }) { padding ->
-            Column(Modifier.padding(padding).fillMaxSize()) {
+            if (showOrders) {
+                OrdersScreen(accessToken, Modifier.padding(padding))
+            } else Column(Modifier.padding(padding).fillMaxSize()) {
                 Column(Modifier.padding(horizontal = 16.dp)) {
                     Text("Find your next favourite", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     Text("Curated picks, everyday deals.", color = Color.Gray)
@@ -189,6 +195,31 @@ private fun ShopScreen(accessToken: String, onLogout: () -> Unit) {
                 }
                 if (filtered.isEmpty()) Text("No products found. Check that the BFF is running on localhost:8080.", Modifier.padding(24.dp))
                 else LazyVerticalGrid(GridCells.Adaptive(160.dp), Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { items(filtered) { ProductCard(it) } }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OrdersScreen(accessToken: String, modifier: Modifier = Modifier) {
+    var orders by remember { mutableStateOf<List<Order>>(emptyList()) }
+    var error by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(accessToken) {
+        runCatching { StoreMeshApi().orders(accessToken) }
+            .onSuccess { orders = it }
+            .onFailure { error = it.message ?: "Unable to load orders" }
+    }
+    Column(modifier.fillMaxSize().padding(20.dp)) {
+        Text("My orders", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        if (error != null) Text(error!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 12.dp))
+        else if (orders.isEmpty()) Text("No orders yet.", modifier = Modifier.padding(top = 20.dp))
+        else orders.forEach { order ->
+            Card(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(order.orderId, fontWeight = FontWeight.Bold)
+                    Text(order.status.removePrefix("ORDER_STATUS_").lowercase().replaceFirstChar { it.uppercase() }, color = Color.Gray)
+                    Text("${order.currency} ${"%.2f".format(order.totalMinor / 100.0)}", modifier = Modifier.padding(top = 6.dp))
+                }
             }
         }
     }
@@ -213,6 +244,7 @@ data class Product(val id: String, val name: String, val description: String, va
 }
 
 data class LoginResult(val accessToken: String, val refreshToken: String)
+data class Order(val orderId: String, val status: String, val totalMinor: Long, val currency: String, val createdAt: String)
 
 private class SessionStore(context: Context) {
     private val prefs = context.getSharedPreferences("storemesh_session", Context.MODE_PRIVATE)

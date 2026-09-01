@@ -27,6 +27,15 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
         }
     }
 
+    fun orders(accessToken: String): List<Order> {
+        val response = request("/api/v1/orders?page_size=50", "GET", token = accessToken)
+        val array = response.optJSONArray("orders") ?: return emptyList()
+        return List(array.length()) { index ->
+            val item = array.getJSONObject(index)
+            Order(item.optString("orderId"), item.optString("status", "ORDER_STATUS_PENDING"), item.optLong("totalMinor"), item.optString("currency", "USD"), item.optString("createdAt"))
+        }
+    }
+
     private fun request(path: String, method: String, body: JSONObject? = null, token: String? = null): JSONObject {
         val connection = (URL(baseUrl.trimEnd('/') + path).openConnection() as HttpURLConnection).apply {
             requestMethod = method
