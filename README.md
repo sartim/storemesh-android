@@ -29,6 +29,19 @@ an approved tunnel.
 The debug build uses `http://10.0.2.2:8080` by default. Start the local BFF
 and port-forward it to `localhost:8080` before signing in. The app calls
 `POST /api/v1/auth/login` and loads active products from
+`GET /api/v1/products`. For a physical device, change `API_BASE_URL` in
+`app/build.gradle.kts` to the host machine's LAN address.
+
+## Releases
+
+Run the **Android release** workflow manually with a `MAJOR.MINOR.PATCH`
+version. It stamps `versionName` and a monotonic Android `versionCode`, builds
+the release APK, uploads it as an artifact, and creates the matching `vX.Y.Z`
+tag.
+
+The debug build uses `http://10.0.2.2:8080` by default. Start the local BFF
+and port-forward it to `localhost:8080` before signing in. The app calls
+`POST /api/v1/auth/login` and loads active products from
 `GET /api/v1/products`. For a physical device, replace `API_BASE_URL` in
 `app/build.gradle.kts` with the host machine's LAN address.
 
