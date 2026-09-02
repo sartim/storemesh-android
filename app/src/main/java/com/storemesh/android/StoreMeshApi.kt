@@ -8,6 +8,8 @@ import org.json.JSONObject
 
 /** REST client for the local BFF. Domain services remain behind the BFF. */
 class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
+    fun featureFlags(accessToken: String): FeatureFlags = FeatureFlags.fromJson(request("/api/v1/config", "GET", token = accessToken))
+
     fun login(email: String, password: String): LoginResult {
         val response = request("/api/v1/auth/login", "POST", JSONObject().put("email", email).put("password", password))
         return LoginResult(response.getString("accessToken"), response.getString("refreshToken"))

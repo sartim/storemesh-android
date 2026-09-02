@@ -21,6 +21,7 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080\"")
         buildConfigField("String", "KEYCLOAK_ISSUER", "\"http://10.0.2.2:8081/realms/storemesh\"")
         buildConfigField("String", "KEYCLOAK_CLIENT_ID", "\"storemesh-android\"")
+        manifestPlaceholders["appAuthRedirectScheme"] = "com.storemesh.android"
     }
 }
 
