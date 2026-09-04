@@ -19,7 +19,7 @@ fun StoreMeshApp(context: Context) {
         }
         stage = if (token.isNullOrBlank()) AppStage.Login else AppStage.Shop
     }
-    MaterialTheme { Surface(Modifier.fillMaxSize()) { when (stage) {
+    StoreMeshTheme { Surface(Modifier.fillMaxSize()) { when (stage) {
         AppStage.Splash -> SplashScreen()
         AppStage.Login -> LoginScreen { result -> SessionStore(context).save(result); token = result.accessToken; stage = AppStage.Shop }
         AppStage.Shop -> ShopScreen(token.orEmpty()) { SessionStore(context).clear(); token = null; stage = AppStage.Login }
