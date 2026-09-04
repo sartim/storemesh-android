@@ -22,22 +22,23 @@ app/src/main/java/com/storemesh/android/
 └── feature/admin/    # role-aware operations UI
 ```
 
-The debug build uses `http://10.0.2.2:8080` by default. Start the local BFF
-and port-forward it to `localhost:8080` before signing in. The app calls the
-BFF's REST endpoints and loads active products from `GET /api/v1/products`.
+The debug build uses `http://10.0.2.2:8080` by default for an Android emulator.
+Start the BFF as a local process on the host at port `8080` before signing in;
+do not use Kind or Docker for application development. The app calls the BFF's
+REST endpoints and loads active products from `GET /api/v1/products`.
 For a physical device, change `API_BASE_URL` in `app/build.gradle.kts` to the
-host machine's LAN address.
+development machine's LAN address.
 
 The `Continue with StoreMesh` action uses native AppAuth with Authorization
 Code + PKCE and the public `storemesh-android` Keycloak client. The callback
 is `com.storemesh.android://oauth/callback`; access and refresh tokens are
 stored through the encrypted `SessionStore` backed by Android Keystore.
 
-The debug Keycloak issuer is `http://10.0.2.2:8081/realms/storemesh`, so the
-local forwarding script must expose Keycloak on port `8081` before testing
-native sign-in. A physical device should use an HTTPS ngrok BFF origin and a
-device-reachable Keycloak issuer; override the debug values locally rather
-than committing tunnel URLs.
+The debug Keycloak issuer is `http://10.0.2.2:8081/realms/storemesh` when a
+local Keycloak instance is deliberately available. For ordinary local feature
+development, use the BFF's documented local compatibility mode. OIDC testing
+requires a reachable Keycloak environment; configure it locally rather than
+starting the infrastructure stack as part of every app run.
 
 For a physical-device demo, expose only the BFF through an authenticated
 ngrok tunnel:
