@@ -53,8 +53,9 @@ gRPC, databases, Redis, or observability dashboards.
 The native API client supports the authenticated customer's persisted cart and
 customer-scoped order creation. The current native cart screen provides
 quantity controls, line totals, subtotal display, and checkout with
-post-success cart clearing. The next slice is GraphQL client adoption and
-mobile integration testing; REST remains available for compatibility.
+post-success cart clearing. Catalog and cart reads use the BFF GraphQL
+contract; REST remains available for compatibility. Pull requests and main
+pushes run unit/build validation and a hosted Android emulator smoke test.
 
 ## Releases
 
