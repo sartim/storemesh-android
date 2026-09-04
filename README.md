@@ -77,3 +77,10 @@ configuration and choose **Run > Edit Configurations > + > Android App**. Set
 the module to `StoreMesh.app` (shown as `app` in some Android Studio versions),
 select `Medium_Phone_API_35`, and apply. The repository also includes a shared
 `StoreMesh` configuration under `.run/StoreMesh.xml` after Gradle sync.
+## API transport
+
+The app uses the Go BFF as its only API origin. Catalog and cart reads use the
+authenticated GraphQL endpoint (`/api/v1/graphql`) for API composition; REST
+remains available for feature flags, checkout, and compatibility operations.
+The GraphQL client is isolated in `GraphQLClient.kt` so transport and parsing
+can be tested independently from Compose screens.
