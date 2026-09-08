@@ -39,7 +39,7 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
     }
 
     fun getCart(accessToken: String): List<CartLine> {
-        val response = request("/api/v1/cart", "GET", token = accessToken)
+        val response = cartObject(request(cartPath(accessToken), "GET", token = accessToken))
         val array = response.optJSONArray("lines") ?: return emptyList()
         return List(array.length()) { index ->
             val item = array.getJSONObject(index)
@@ -51,7 +51,7 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
         val payload = JSONObject().put("lines", org.json.JSONArray().apply {
             lines.forEach { put(JSONObject().put("productId", it.productId).put("quantity", it.quantity)) }
         })
-        val response = request("/api/v1/cart", "PUT", payload, accessToken)
+        val response = cartObject(request(cartPath(accessToken), "PUT", payload, accessToken))
         val array = response.optJSONArray("lines") ?: return emptyList()
         return List(array.length()) { index ->
             val item = array.getJSONObject(index)
@@ -59,7 +59,15 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
         }
     }
 
-    fun clearCart(accessToken: String) { request("/api/v1/cart", "DELETE", token = accessToken) }
+    fun clearCart(accessToken: String) { request(cartPath(accessToken), "DELETE", token = accessToken) }
+
+    private fun cartPath(accessToken: String): String {
+        val customerId = accessTokenSubject(accessToken)
+        require(customerId.isNotBlank()) { "access token subject is required for cart operations" }
+        return "/api/v1/cart?customer_id=$customerId"
+    }
+
+    private fun cartObject(response: JSONObject): JSONObject = response.optJSONObject("cart") ?: response
 
     fun createOrder(accessToken: String, customerId: String, lines: List<CartLine>): Order {
         require(lines.isNotEmpty()) { "cart cannot be empty" }
