@@ -74,6 +74,12 @@ set **Gradle distribution** to **Wrapper**. The committed wrapper uses Gradle
 the project retains the Compose compiler plugin. Select the
 existing `Medium_Phone` API 35 emulator and press Run.
 
+For a complete native local run, start Product, Inventory, Order, User, and
+BFF as separate processes using their repository READMEs, then run the `app`
+module from Android Studio. The emulator reaches the development machine's
+BFF through `http://10.0.2.2:8080`; no container or Kubernetes networking is
+needed.
+
 If Android Studio shows **Module not specified**, delete the empty run
 configuration and choose **Run > Edit Configurations > + > Android App**. Set
 the module to `StoreMesh.app` (shown as `app` in some Android Studio versions),
