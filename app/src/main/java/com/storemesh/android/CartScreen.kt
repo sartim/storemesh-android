@@ -14,7 +14,7 @@ fun CartScreen(lines: List<CartLine>, products: List<Product>, onChange: (String
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
-                    Text("Saved cart", style = MaterialTheme.typography.headlineMedium)
+                    Text("Saved cart (${lines.sumOf { it.quantity }})", style = MaterialTheme.typography.headlineMedium)
                     Text("Synced to your account", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 TextButton(onClick = onClear, enabled = lines.isNotEmpty()) { Text("Clear") }
