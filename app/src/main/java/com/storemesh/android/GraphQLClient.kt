@@ -4,12 +4,14 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
 /** Small transport for the BFF GraphQL endpoint; domain services remain private. */
 class GraphQLClient(private val endpoint: String = BuildConfig.API_BASE_URL.trimEnd('/') + "/api/v1/graphql") {
-    fun execute(query: String, accessToken: String): JSONObject {
+    suspend fun execute(query: String, accessToken: String): JSONObject = withContext(Dispatchers.IO) {
         val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = 8_000
@@ -26,10 +28,10 @@ class GraphQLClient(private val endpoint: String = BuildConfig.API_BASE_URL.trim
         if (connection.responseCode !in 200..299 || response.optJSONArray("errors")?.length() ?: 0 > 0) {
             throw IllegalStateException(response.optJSONArray("errors")?.optJSONObject(0)?.optString("message") ?: "GraphQL request failed (${connection.responseCode})")
         }
-        return response.optJSONObject("data") ?: throw IllegalStateException("GraphQL response did not contain data")
+        response.optJSONObject("data") ?: throw IllegalStateException("GraphQL response did not contain data")
     }
 
-    fun products(accessToken: String): List<Product> {
+    suspend fun products(accessToken: String): List<Product> {
         val data = execute("""{ products(pageSize: 100) { products { id name description priceMinor currency } } }""", accessToken)
         val items = data.optJSONObject("products")?.optJSONArray("products") ?: JSONArray()
         return List(items.length()) { index ->
@@ -38,7 +40,7 @@ class GraphQLClient(private val endpoint: String = BuildConfig.API_BASE_URL.trim
         }
     }
 
-    fun cart(accessToken: String): List<CartLine> {
+    suspend fun cart(accessToken: String): List<CartLine> {
         val lines = execute("""{ cart { lines { productId quantity } } }""", accessToken).optJSONObject("cart")?.optJSONArray("lines") ?: JSONArray()
         return List(lines.length()) { index ->
             val item = lines.getJSONObject(index)
