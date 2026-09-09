@@ -32,11 +32,11 @@ class GraphQLClient(private val endpoint: String = BuildConfig.API_BASE_URL.trim
     }
 
     suspend fun products(accessToken: String): List<Product> {
-        val data = execute("""{ products(pageSize: 100) { products { id name description priceMinor currency } } }""", accessToken)
+        val data = execute("""{ products(pageSize: 100) { products { id sku name description priceMinor currency } } }""", accessToken)
         val items = data.optJSONObject("products")?.optJSONArray("products") ?: JSONArray()
         return List(items.length()) { index ->
             val item = items.getJSONObject(index)
-            Product(item.optString("id"), item.optString("name"), item.optString("description"), item.optLong("priceMinor"), item.optString("currency", "USD"))
+            Product(item.optString("id"), item.optString("sku").ifBlank { null }, item.optString("name"), item.optString("description"), item.optLong("priceMinor"), item.optString("currency", "USD"))
         }
     }
 

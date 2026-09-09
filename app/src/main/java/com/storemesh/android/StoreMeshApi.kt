@@ -4,32 +4,34 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 /** REST client for the local BFF. Domain services remain behind the BFF. */
 class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
-    fun featureFlags(accessToken: String): FeatureFlags = FeatureFlags.fromJson(request("/api/v1/config", "GET", token = accessToken))
+    suspend fun featureFlags(accessToken: String): FeatureFlags = FeatureFlags.fromJson(request("/api/v1/config", "GET", token = accessToken))
 
-    fun login(email: String, password: String): LoginResult {
+    suspend fun login(email: String, password: String): LoginResult {
         val response = request("/api/v1/auth/login", "POST", JSONObject().put("email", email).put("password", password))
         return LoginResult(response.getString("accessToken"), response.getString("refreshToken"))
     }
 
-    fun refresh(refreshToken: String): LoginResult {
+    suspend fun refresh(refreshToken: String): LoginResult {
         val response = request("/api/v1/auth/refresh", "POST", JSONObject().put("refreshToken", refreshToken))
         return LoginResult(response.getString("accessToken"), response.getString("refreshToken"))
     }
 
-    fun products(accessToken: String): List<Product> {
+    suspend fun products(accessToken: String): List<Product> {
         val response = request("/api/v1/products?page_size=100&status=PRODUCT_STATUS_ACTIVE", "GET", token = accessToken)
         val array = response.optJSONArray("products") ?: return emptyList()
         return List(array.length()) { index ->
             val item = array.getJSONObject(index)
-            Product(item.optString("id"), item.optString("name"), item.optString("description"), item.optString("priceMinor", "0").toLongOrNull() ?: 0L, item.optString("currency", "USD"))
+            Product(item.optString("id"), item.optString("sku").ifBlank { null }, item.optString("name"), item.optString("description"), item.optString("priceMinor", "0").toLongOrNull() ?: 0L, item.optString("currency", "USD"))
         }
     }
 
-    fun orders(accessToken: String): List<Order> {
+    suspend fun orders(accessToken: String): List<Order> {
         val response = request("/api/v1/orders?page_size=50", "GET", token = accessToken)
         val array = response.optJSONArray("orders") ?: return emptyList()
         return List(array.length()) { index ->
@@ -38,7 +40,7 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
         }
     }
 
-    fun getCart(accessToken: String): List<CartLine> {
+    suspend fun getCart(accessToken: String): List<CartLine> {
         val response = cartObject(request(cartPath(accessToken), "GET", token = accessToken))
         val array = response.optJSONArray("lines") ?: return emptyList()
         return List(array.length()) { index ->
@@ -47,7 +49,7 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
         }
     }
 
-    fun saveCart(accessToken: String, lines: List<CartLine>): List<CartLine> {
+    suspend fun saveCart(accessToken: String, lines: List<CartLine>): List<CartLine> {
         val payload = JSONObject().put("lines", org.json.JSONArray().apply {
             lines.forEach { put(JSONObject().put("productId", it.productId).put("quantity", it.quantity)) }
         })
@@ -59,7 +61,7 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
         }
     }
 
-    fun clearCart(accessToken: String) { request(cartPath(accessToken), "DELETE", token = accessToken) }
+    suspend fun clearCart(accessToken: String) { request(cartPath(accessToken), "DELETE", token = accessToken) }
 
     private fun cartPath(accessToken: String): String {
         val customerId = accessTokenSubject(accessToken)
@@ -69,7 +71,7 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
 
     private fun cartObject(response: JSONObject): JSONObject = response.optJSONObject("cart") ?: response
 
-    fun createOrder(accessToken: String, customerId: String, lines: List<CartLine>): Order {
+    suspend fun createOrder(accessToken: String, customerId: String, lines: List<CartLine>): Order {
         require(lines.isNotEmpty()) { "cart cannot be empty" }
         val payload = JSONObject().put("customerId", customerId).put("lines", org.json.JSONArray().apply {
             lines.forEach { put(JSONObject().put("productId", it.productId).put("quantity", it.quantity)) }
@@ -85,7 +87,7 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
         return Order(item.optString("orderId"), item.optString("status"), item.optLong("totalMinor"), item.optString("currency", "USD"), item.optString("createdAt"))
     }
 
-    private fun request(path: String, method: String, body: JSONObject? = null, token: String? = null, idempotencyKey: String? = null): JSONObject {
+    private suspend fun request(path: String, method: String, body: JSONObject? = null, token: String? = null, idempotencyKey: String? = null): JSONObject = withContext(Dispatchers.IO) {
         val connection = (URL(baseUrl.trimEnd('/') + path).openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 8_000
@@ -104,6 +106,6 @@ class StoreMeshApi(private val baseUrl: String = BuildConfig.API_BASE_URL) {
         if (connection.responseCode !in 200..299) {
             throw IllegalStateException(JSONObject(payload).optString("message", "Request failed (${connection.responseCode})"))
         }
-        return JSONObject(payload)
+        JSONObject(payload)
     }
 }

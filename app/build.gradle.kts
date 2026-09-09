@@ -39,5 +39,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.compose.material.icons)
     implementation(libs.appauth)
+    implementation(libs.coil.compose)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
