@@ -14,7 +14,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SplashScreen() { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) { Column(horizontalAlignment = Alignment.CenterHorizontally) { Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(104.dp)) { Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.ShoppingBag, null, tint = Color.White, modifier = Modifier.size(58.dp)) } }; Text("StoreMesh", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 18.dp)); Text("Everything you need, delivered to you.", color = MaterialTheme.colorScheme.onSurfaceVariant) } } }
@@ -30,7 +32,18 @@ fun LoginScreen(onLoggedIn: (LoginResult) -> Unit) {
         OutlinedTextField(email, { email = it; error = null }, Modifier.fillMaxWidth(), label = { Text("Email") }, singleLine = true)
         Spacer(Modifier.height(12.dp)); OutlinedTextField(password, { password = it; error = null }, Modifier.fillMaxWidth(), label = { Text("Password") }, singleLine = true, visualTransformation = PasswordVisualTransformation())
         error?.let { Text(it, modifier = Modifier.padding(top = 10.dp), color = MaterialTheme.colorScheme.error) }; Spacer(Modifier.height(20.dp))
-        Button(onClick = { loading = true; scope.launch { runCatching { StoreMeshApi().login(email.trim(), password) }.onSuccess(onLoggedIn).onFailure { error = it.message ?: "Unable to sign in"; loading = false } } }, enabled = !loading && email.isNotBlank() && password.isNotBlank(), modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(14.dp)) { Text(if (loading) "Signing in…" else "Log in") }
+        Button(onClick = {
+            loading = true
+            scope.launch {
+                val result = runCatching {
+                    withContext(Dispatchers.IO) { StoreMeshApi().login(email.trim(), password) }
+                }
+                result.onSuccess(onLoggedIn).onFailure {
+                    error = it.message ?: "Unable to sign in"
+                    loading = false
+                }
+            }
+        }, enabled = !loading && email.isNotBlank() && password.isNotBlank(), modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(14.dp)) { Text(if (loading) "Signing in…" else "Log in") }
         Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) { HorizontalDivider(Modifier.weight(1f)); Text("or", Modifier.padding(horizontal = 12.dp), color = MaterialTheme.colorScheme.onSurfaceVariant); HorizontalDivider(Modifier.weight(1f)) }
         OutlinedButton(onClick = { loading = true; startOidc() }, enabled = !loading, modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(14.dp)) { Text("Continue securely with StoreMesh") }
         Text("Your data is protected with secure sign-in using OIDC and PKCE.", modifier = Modifier.padding(top = 18.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
