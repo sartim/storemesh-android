@@ -92,3 +92,10 @@ authenticated GraphQL endpoint (`/api/v1/graphql`) for API composition; REST
 remains available for feature flags, checkout, and compatibility operations.
 The GraphQL client is isolated in `GraphQLClient.kt` so transport and parsing
 can be tested independently from Compose screens.
+
+Run framework-independent checks before using an emulator:
+
+```sh
+./gradlew test --no-daemon
+./gradlew assembleDebug --no-daemon
+```
