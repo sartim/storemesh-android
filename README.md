@@ -99,3 +99,12 @@ Run framework-independent checks before using an emulator:
 ./gradlew test --no-daemon
 ./gradlew assembleDebug --no-daemon
 ```
+
+The hosted emulator smoke job also runs deterministic Compose checks for the
+login gate and saved-cart presentation. These tests do not require a running
+BFF, database, Docker, or Kubernetes cluster. Run them locally on an available
+API 35 emulator with:
+
+```sh
+./gradlew connectedDebugAndroidTest --no-daemon
+```
