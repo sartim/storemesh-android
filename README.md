@@ -100,6 +100,15 @@ Run framework-independent checks before using an emulator:
 ./gradlew assembleDebug --no-daemon
 ```
 
+The JVM test suite also runs an in-process BFF fixture against the real
+Android HTTP clients. It verifies GraphQL catalog decoding, persisted cart
+decoding and updates, customer-scoped cart routing, and order creation without
+requiring a running service stack:
+
+```sh
+./gradlew test --no-daemon
+```
+
 The hosted emulator smoke job also runs deterministic Compose checks for the
 login gate and saved-cart presentation. These tests do not require a running
 BFF, database, Docker, or Kubernetes cluster. Run them locally on an available
