@@ -93,6 +93,11 @@ remains available for feature flags, checkout, and compatibility operations.
 The GraphQL client is isolated in `GraphQLClient.kt` so transport and parsing
 can be tested independently from Compose screens.
 
+The canonical v1 BFF response shapes are copied into
+`app/src/test/resources/bff/v1/` for client contract tests. Keep these golden
+fixtures aligned with `storemesh-bff/api/graphql/fixtures/v1/` when the BFF
+schema changes.
+
 Run framework-independent checks before using an emulator:
 
 ```sh
