@@ -22,6 +22,9 @@ android {
         buildConfigField("String", "KEYCLOAK_ISSUER", "\"http://10.0.2.2:8081/realms/storemesh\"")
         buildConfigField("String", "KEYCLOAK_CLIENT_ID", "\"storemesh-android\"")
         manifestPlaceholders["appAuthRedirectScheme"] = "com.storemesh.android"
+        fun quoteBuildConfig(value: String): String = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+        buildConfigField("String", "INTEGRATION_BFF_URL", quoteBuildConfig(System.getenv("STOREMESH_BFF_URL").orEmpty()))
+        buildConfigField("String", "INTEGRATION_ACCESS_TOKEN", quoteBuildConfig(System.getenv("STOREMESH_ACCESS_TOKEN").orEmpty()))
     }
 }
 

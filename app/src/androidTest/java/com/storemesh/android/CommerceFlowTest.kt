@@ -6,6 +6,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assume.assumeTrue
+import org.junit.Assert.assertTrue
+import kotlinx.coroutines.runBlocking
 
 /** Deterministic UI checks for the unauthenticated entry point and saved cart. */
 class CommerceFlowTest {
@@ -39,5 +42,20 @@ class CommerceFlowTest {
         compose.onNodeWithText("Halo desk lamp").assertIsDisplayed()
         compose.onNodeWithText("Subtotal").assertIsDisplayed()
         compose.onNodeWithText("USD 25.98").assertIsDisplayed()
+    }
+
+    @Test
+    fun liveBffCommerceFlowWhenConfigured() = runBlocking {
+        assumeTrue(BuildConfig.INTEGRATION_BFF_URL.isNotBlank())
+        assumeTrue(BuildConfig.INTEGRATION_ACCESS_TOKEN.isNotBlank())
+        val api = StoreMeshApi(BuildConfig.INTEGRATION_BFF_URL)
+        val token = BuildConfig.INTEGRATION_ACCESS_TOKEN
+        val product = api.products(token).firstOrNull() ?: error("BFF returned no active products")
+        val saved = api.saveCart(token, listOf(CartLine(product.id, 1)))
+        assertTrue(saved.single().productId == product.id)
+        val order = api.createOrder(token, accessTokenSubject(token), saved)
+        assertTrue(order.orderId.isNotBlank())
+        api.clearCart(token)
+        assertTrue(api.getCart(token).isEmpty())
     }
 }

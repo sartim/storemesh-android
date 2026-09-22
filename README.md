@@ -122,3 +122,18 @@ API 35 emulator with:
 ```sh
 ./gradlew connectedDebugAndroidTest --no-daemon
 ```
+
+For an opt-in network-backed commerce check against independently running
+services, provide a BFF root URL and a valid Keycloak access token before
+running the same emulator suite:
+
+```sh
+STOREMESH_BFF_URL='http://10.0.2.2:8080' \
+STOREMESH_ACCESS_TOKEN='...' \
+./gradlew connectedDebugAndroidTest --no-daemon
+```
+
+The live test reads a product, saves one cart line, creates an idempotent
+order, and clears the cart. It is skipped when either variable is unset and
+must use development data only. Physical-device testing should use the HTTPS
+ngrok BFF origin instead of `10.0.2.2`.
