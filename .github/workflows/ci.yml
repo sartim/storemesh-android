@@ -55,4 +55,9 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel_2
+          cores: 2
+          force-avd-creation: true
+          wipe-data: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
           script: ./gradlew connectedDebugAndroidTest --no-daemon
