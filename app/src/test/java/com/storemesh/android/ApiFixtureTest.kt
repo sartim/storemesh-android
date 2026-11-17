@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -14,6 +15,7 @@ import java.util.Base64
 class ApiFixtureTest {
     private lateinit var server: HttpServer
     private lateinit var baseUrl: String
+    private var orderIdempotencyKey: String? = null
 
     @Before
     fun startFixture() {
@@ -40,6 +42,7 @@ class ApiFixtureTest {
         val saved = api.saveCart(token, listOf(CartLine("p-1", 2)))
         assertEquals(listOf(CartLine("p-1", 2)), saved)
         assertEquals("o-1", api.createOrder(token, "customer-1", saved).orderId)
+        assertTrue(!orderIdempotencyKey.isNullOrBlank())
     }
 
     private fun respond(exchange: HttpExchange) {
@@ -52,6 +55,9 @@ class ApiFixtureTest {
             path.endsWith("/cart") -> "{\"lines\":[{\"productId\":\"p-1\",\"quantity\":1}]}"
             path.endsWith("/orders") -> "{\"order\":{\"orderId\":\"o-1\",\"status\":\"ORDER_STATUS_PENDING\",\"totalMinor\":2598,\"currency\":\"USD\",\"createdAt\":\"2026-09-17T00:00:00Z\"}}"
             else -> "{}"
+        }
+        if (path.endsWith("/orders") && exchange.requestMethod == "POST") {
+            orderIdempotencyKey = exchange.requestHeaders.getFirst("Idempotency-Key")
         }
         val bytes = body.toByteArray(StandardCharsets.UTF_8)
         exchange.responseHeaders.add("Content-Type", "application/json")

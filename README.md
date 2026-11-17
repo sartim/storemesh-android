@@ -65,6 +65,13 @@ the next `MAJOR.MINOR.PATCH` from Conventional Commits, stamps `versionName`
 and a monotonic Android `versionCode`, creates the GitHub release/tag, and
 builds the release APK as an artifact.
 
+## CI validation modes
+
+The **Android CI** workflow always runs JVM tests and the debug APK build. When
+started with `workflow_dispatch`, leave `run_emulator_smoke` disabled for fast
+contract/build validation; enable it when the hosted API 35 emulator smoke test
+is needed.
+
 ## Android Studio run configuration
 
 Open the repository root, allow Gradle sync, and select the `app` run
