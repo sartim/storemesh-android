@@ -45,7 +45,6 @@ jobs:
     # Emulator boot is an expensive, environment-sensitive gate. Keep it
     # available for explicit validation without blocking ordinary PR checks.
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_emulator_smoke }}
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_emulator_smoke }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
