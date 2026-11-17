@@ -11,6 +11,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -27,6 +28,7 @@ jobs:
 
   emulator-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: test
     steps:
       - uses: actions/checkout@v4
