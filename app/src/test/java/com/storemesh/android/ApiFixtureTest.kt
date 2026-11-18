@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -16,6 +17,7 @@ class ApiFixtureTest {
     private lateinit var server: HttpServer
     private lateinit var baseUrl: String
     private var orderIdempotencyKey: String? = null
+    private var cancelledOrderId: String? = null
 
     @Before
     fun startFixture() {
@@ -34,6 +36,11 @@ class ApiFixtureTest {
         val graphQLProducts = GraphQLClient("$baseUrl/api/v1/graphql").products(token)
         assertEquals("Halo desk lamp", graphQLProducts.single().name)
 
+        val graphQL = GraphQLClient("$baseUrl/api/v1/graphql")
+        assertEquals("o-1", graphQL.orders(token).single().orderId)
+        assertEquals("ORDER_STATUS_CANCELLED", graphQL.cancelOrder(token, "o-1").status)
+        assertEquals("o-1", cancelledOrderId)
+
         val api = StoreMeshApi(baseUrl)
         val products = api.products(token)
         assertEquals("p-1", products.single().id)
@@ -49,6 +56,12 @@ class ApiFixtureTest {
         val requestBody = exchange.requestBody.bufferedReader().use { it.readText() }
         val path = exchange.requestURI.path
         val body = when {
+            path.endsWith("/graphql") && requestBody.contains("cancelOrder") -> {
+                val orderId = Regex("""cancelOrder\(orderId: "([^"]+)"\)""").find(JSONObject(requestBody).getString("query"))?.groupValues?.get(1) ?: ""
+                cancelledOrderId = orderId
+                "{\"data\":{\"cancelOrder\":{\"id\":\"$orderId\",\"status\":\"ORDER_STATUS_CANCELLED\",\"totalMinor\":2598,\"currency\":\"USD\",\"createdAt\":\"2026-09-17T00:00:00Z\"}}}"
+            }
+            path.endsWith("/graphql") && requestBody.contains("orders(") -> "{\"data\":{\"orders\":{\"orders\":[{\"id\":\"o-1\",\"status\":\"ORDER_STATUS_PENDING\",\"totalMinor\":2598,\"currency\":\"USD\",\"createdAt\":\"2026-09-17T00:00:00Z\"}]}}}"
             path.endsWith("/graphql") && requestBody.contains("products") -> "{\"data\":{\"products\":{\"products\":[{\"id\":\"p-1\",\"sku\":\"SM-LAMP-001\",\"name\":\"Halo desk lamp\",\"description\":\"Warm light\",\"priceMinor\":1299,\"currency\":\"USD\"}]}}}"
             path.endsWith("/products") -> "{\"products\":[{\"id\":\"p-1\",\"sku\":\"SM-LAMP-001\",\"name\":\"Halo desk lamp\",\"description\":\"Warm light\",\"priceMinor\":\"1299\",\"currency\":\"USD\"}]}"
             path.endsWith("/cart") && exchange.requestMethod == "PUT" -> "{\"lines\":[{\"productId\":\"p-1\",\"quantity\":2}]}"

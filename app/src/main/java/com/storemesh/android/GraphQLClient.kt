@@ -47,4 +47,21 @@ class GraphQLClient(private val endpoint: String = BuildConfig.API_BASE_URL.trim
             CartLine(item.optString("productId"), item.optInt("quantity"))
         }
     }
+
+    suspend fun orders(accessToken: String): List<Order> {
+        val items = execute("""{ orders(pageSize: 50) { orders { id status totalMinor currency createdAt } } }""", accessToken)
+            .optJSONObject("orders")?.optJSONArray("orders") ?: JSONArray()
+        return List(items.length()) { index ->
+            val item = items.getJSONObject(index)
+            Order(item.optString("id"), item.optString("status"), item.optLong("totalMinor"), item.optString("currency", "USD"), item.optString("createdAt"))
+        }
+    }
+
+    suspend fun cancelOrder(accessToken: String, orderId: String): Order {
+        require(orderId.isNotBlank()) { "order ID is required" }
+        val query = """mutation { cancelOrder(orderId: ${JSONObject.quote(orderId)}) { id status totalMinor currency createdAt } }"""
+        val item = execute(query, accessToken).optJSONObject("cancelOrder")
+            ?: throw IllegalStateException("GraphQL cancellation response did not contain an order")
+        return Order(item.optString("id"), item.optString("status"), item.optLong("totalMinor"), item.optString("currency", "USD"), item.optString("createdAt"))
+    }
 }

@@ -59,6 +59,33 @@ private fun artworkAsset(product: Product): String = when {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun ProductDetailsSheet(product: Product, onAdd: () -> Unit, onDismiss: () -> Unit) { ModalBottomSheet(onDismissRequest = onDismiss) { Column(Modifier.padding(24.dp).padding(bottom = 24.dp)) { ProductArtwork(product, 220.dp); Text(product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 18.dp)); Text(product.formattedPrice(), style = MaterialTheme.typography.titleLarge, color = Color(0xFF087443), fontWeight = FontWeight.Bold); Text(product.description, modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.onSurfaceVariant); Button(onClick = onAdd, modifier = Modifier.fillMaxWidth()) { Text("Add to cart") } } } }
 @Composable private fun ProfileScreen(onLogout: () -> Unit, modifier: Modifier) { Column(modifier.fillMaxSize().padding(20.dp)) { Text("Profile", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold); Card(Modifier.fillMaxWidth().padding(top = 16.dp)) { Column(Modifier.padding(18.dp)) { Icon(Icons.Default.AccountCircle, null, modifier = Modifier.size(56.dp), tint = MaterialTheme.colorScheme.primary); Text("Customer account", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Text("Manage your account, addresses, and payment methods", color = MaterialTheme.colorScheme.onSurfaceVariant) } }; listOf("My details", "Addresses", "Payment methods", "Notifications", "Help & support", "Settings").forEach { label -> ListItem(headlineContent = { Text(label) }, leadingContent = { Icon(Icons.Default.ChevronRight, null) }) }; TextButton(onClick = onLogout) { Text("Sign out", color = MaterialTheme.colorScheme.error) } } }
-@Composable private fun OrdersScreen(token: String, modifier: Modifier = Modifier) { var orders by remember { mutableStateOf<List<Order>>(emptyList()) }; LaunchedEffect(token) { runCatching { StoreMeshApi().orders(token) }.onSuccess { orders = it } }; if (orders.isEmpty()) Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Column(horizontalAlignment = Alignment.CenterHorizontally) { Icon(Icons.Default.Inventory2, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary); Text("No orders yet", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Text("Your placed orders will appear here.", color = MaterialTheme.colorScheme.onSurfaceVariant) } } else LazyColumn(modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { items(orders.size) { index -> val order = orders[index]; Card(Modifier.fillMaxWidth()) { ListItem(headlineContent = { Text(order.orderId, fontWeight = FontWeight.Bold) }, supportingContent = { Text(order.status.removePrefix("ORDER_STATUS_").lowercase().replaceFirstChar { it.uppercase() }) }, trailingContent = { Text("${order.currency} ${"%.2f".format(order.totalMinor / 100.0)}") }) } } } }
+@Composable private fun OrdersScreen(token: String, modifier: Modifier = Modifier) {
+    val scope = rememberCoroutineScope()
+    val snackbars = remember { SnackbarHostState() }
+    var orders by remember { mutableStateOf<List<Order>>(emptyList()) }
+    var cancelTarget by remember { mutableStateOf<Order?>(null) }
+    suspend fun refresh() { runCatching { GraphQLClient().orders(token) }.onSuccess { orders = it }.onFailure { snackbars.showSnackbar(it.message ?: "Could not load orders") } }
+    LaunchedEffect(token) { refresh() }
+    Scaffold(modifier = modifier, snackbarHost = { SnackbarHost(snackbars) }) { padding ->
+        if (orders.isEmpty()) Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Column(horizontalAlignment = Alignment.CenterHorizontally) { Icon(Icons.Default.Inventory2, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary); Text("No orders yet", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Text("Your placed orders will appear here.", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
+        else LazyColumn(Modifier.fillMaxSize().padding(padding).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(orders.size) { index ->
+                val order = orders[index]
+                Card(Modifier.fillMaxWidth()) { ListItem(
+                    headlineContent = { Text(order.orderId, fontWeight = FontWeight.Bold) },
+                    supportingContent = { Text(order.status.removePrefix("ORDER_STATUS_").lowercase().replaceFirstChar { it.uppercase() }) },
+                    trailingContent = { Column(horizontalAlignment = Alignment.End) { Text("${order.currency} ${"%.2f".format(order.totalMinor / 100.0)}"); if (!order.status.contains("CANCELLED")) TextButton(onClick = { cancelTarget = order }) { Text("Cancel") } } }
+                ) }
+            }
+        }
+    }
+    cancelTarget?.let { order -> AlertDialog(
+        onDismissRequest = { cancelTarget = null },
+        title = { Text("Cancel order?") },
+        text = { Text("Order ${order.orderId} will be cancelled.") },
+        confirmButton = { TextButton(onClick = { cancelTarget = null; scope.launch { runCatching { GraphQLClient().cancelOrder(token, order.orderId) }.onSuccess { refresh() }.onFailure { snackbars.showSnackbar(it.message ?: "Unable to cancel order") } } }) { Text("Cancel order") } },
+        dismissButton = { TextButton(onClick = { cancelTarget = null }) { Text("Keep order") } }
+    ) }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun CheckoutSheet(lines: List<CartLine>, products: List<Product>, onDismiss: () -> Unit, onPlaceOrder: () -> Unit) { ModalBottomSheet(onDismissRequest = onDismiss) { Column(Modifier.padding(24.dp).padding(bottom = 24.dp)) { Text("Checkout", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text("Delivery address", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 18.dp)); Card(Modifier.fillMaxWidth().padding(top = 8.dp)) { Text("Nairobi, Kenya\nStandard delivery · 2–3 business days", Modifier.padding(16.dp)) }; val total = lines.sumOf { line -> products.firstOrNull { it.id == line.productId }?.priceMinor?.times(line.quantity.toLong()) ?: 0L }; Row(Modifier.fillMaxWidth().padding(vertical = 20.dp), horizontalArrangement = Arrangement.SpaceBetween) { Text("Total", fontWeight = FontWeight.Bold); Text("USD ${"%.2f".format(total / 100.0)}", fontWeight = FontWeight.Bold, color = Color(0xFF087443)) }; Button(onClick = onPlaceOrder, modifier = Modifier.fillMaxWidth(), enabled = lines.isNotEmpty()) { Text("Place order") } } } }
